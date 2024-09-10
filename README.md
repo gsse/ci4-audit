@@ -12,7 +12,8 @@ class JobModel extends Model
 {
 	use \Decoda\Audit\Traits\AuditTrait;
 	protected $afterInsert = ['auditInsert'];
-	protected $afterUpdate = ['auditUpdate'];
+	protected $beforeUpdate = ['auditBeforeUpdate'];
+	protected $afterUpdate = ['auditAfterUpdate'];
 	protected $afterDelete = ['auditDelete'];
 ```
 
