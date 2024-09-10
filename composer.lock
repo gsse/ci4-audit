@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "052ee81882933a9cf14dd51465cd97b2",
+    "content-hash": "3c739925e9546ee304fdbd9e0a500802",
     "packages": [
         {
             "name": "swaggest/json-diff",

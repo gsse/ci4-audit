@@ -7,7 +7,7 @@ Lightweight object logging for CodeIgniter 4
 2. Update the database: `> php spark migrate -all`
 3. Set up your models:
 
-```
+```php
 class JobModel extends Model
 {
 	use \Decoda\Audit\Traits\AuditTrait;
@@ -26,14 +26,17 @@ Provides ready-to-use object logging for CodeIgniter 4
 
 Install easily via Composer to take advantage of CodeIgniter 4's autoloading capabilities
 and always be up-to-date:
-* `> composer require decoda/audit`
+```console
+> composer require decoda/audit
+```
 
-Or, install manually by downloading the source files and adding the directory to
-`app/Config/Autoload.php`.
+Or, install manually by downloading the source files and adding the directory to `app/Config/Autoload.php`.
 
 Once the files are downloaded and included in the autoload, run any library migrations
 to ensure the database is setup correctly:
-* `> php spark migrate -all`
+```console
+> php spark migrate -all
+```
 
 ## Configuration (optional)
 
@@ -47,7 +50,7 @@ Once the library is included all the resources are ready to go and you just need
 specify which models and events to audit. Use AuditTrait to add support to any models
 you would like tracked:
 
-```
+```php
 class JobModel extends Model
 {
 	use \Decoda\Audit\Traits\AuditTrait;
@@ -56,7 +59,7 @@ class JobModel extends Model
 Then specify which events you want audited by assigning the corresponding audit methods
 for those events:
 
-```
+```php
 	protected $afterInsert = ['auditInsert'];
 	protected $afterUpdate = ['auditUpdate'];
 	protected $afterDelete = ['auditDelete'];
@@ -69,4 +72,4 @@ The Audit library will create basic logs of each event in the `audits` table, fo
 +----+--------+-----------+---------+--------+----------+---------------------+
 | 10 | sites  |        27 |       9 | create | 2 rows   | 2019-04-05 15:58:40 |
 | 11 | jobs   |        10 |       9 | update | 5 rows   | 2019-04-05 16:01:35 |
-````
+```
