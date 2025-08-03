@@ -12,7 +12,7 @@ class Migration_create_table_audits extends Migration
         $fields = [
             'source'     => ['type' => 'varchar', 'constraint' => 63],
             'source_id'  => ['type' => 'binary', 'constraint' => 26],
-            'company_id'  => ['type' => 'binary', 'constraint' => 26],
+            'company_id'  => ['type' => 'binary', 'constraint' => 26, 'null' => true],
             'user_id'    => ['type' => 'binary', 'constraint' => 26, 'null' => true],
             'event'      => ['type' => 'varchar', 'constraint' => 32],
             'summary'    => ['type' => 'json'],
