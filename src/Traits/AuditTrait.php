@@ -86,6 +86,7 @@ trait AuditTrait
         foreach ($data['id'] as $sourceId) {
 
             $changedData = (array) $this->first($sourceId);
+            $changedData = array_intersect_key($changedData, $data['data']);
 
             // Format json fields for comparison
             foreach ($fields as $field) {
