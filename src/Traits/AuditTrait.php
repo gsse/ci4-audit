@@ -4,11 +4,13 @@ namespace Decoda\Audit\Traits;
 
 use Swaggest\JsonDiff\JsonDiff;
 use Decoda\Audit\Models\AuditModel;
+use stdClass;
 
 // CLASS
 trait AuditTrait
 {
     protected array $changedData;
+    protected array $deletedData;
     /**
      * Takes an array of model $returnTypes
      * and returns an array of Audits,
@@ -66,11 +68,29 @@ trait AuditTrait
             return false;
         }
 
+        $insertData = array_intersect_key($data['data'], array_flip($this->auditableFields));
+
+        foreach ($insertData as $key => $value) {
+
+            if (empty($value)) {
+                unset($insertData[$key]);
+                continue;
+            }
+            if (json_validate($value)) {
+
+                $insertData[$key] = array_filter(json_decode($value, true));
+
+                if (empty($insertData[$key])) {
+                    unset($insertData[$key]);
+                }
+            }
+        }
+
         $audit = [
             'source'    => $this->table,
-            'source_id' => $data['id'], // @phpstan-ignore-line
+            'source_id' => $data['id'],
             'event'     => 'insert',
-            'summary'   => json_encode($data['data'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+            'summary'   => json_encode($insertData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
         ];
         service('audit')->add($audit);
 
@@ -85,17 +105,17 @@ trait AuditTrait
 
         foreach ($data['id'] as $sourceId) {
 
-            $changedData = (array) $this->first($sourceId);
-            $changedData = array_intersect_key($changedData, $data['data']);
+            $originalData = (array) $this->find($sourceId);
+            $changedData = array_intersect_key($data['data'], $originalData);
 
             // Format json fields for comparison
             foreach ($fields as $field) {
                 if ($field->type == 'json' && in_array($field->name, array_keys($changedData)) && in_array($field->name, array_keys($data['data']))) {
 
                     $jsonDiff = new JsonDiff(
+                        json_decode($originalData[$field->name]),
                         json_decode($changedData[$field->name]),
-                        json_decode($data['data'][$field->name]),
-                        JsonDiff::REARRANGE_ARRAYS + JsonDiff::COLLECT_MODIFIED_DIFF
+                        JsonDiff::REARRANGE_ARRAYS + JsonDiff::COLLECT_MODIFIED_DIFF + JsonDiff::SKIP_JSON_PATCH + JsonDiff::SKIP_JSON_MERGE_PATCH
                     );
 
                     if ($jsonDiff->getDiffCnt() == 0) {
@@ -103,10 +123,10 @@ trait AuditTrait
                         continue;
                     }
 
-                    $changedData[$field->name] = (array) $jsonDiff->getModifiedOriginal();
+                    $changedData[$field->name] = (array) $jsonDiff->getModifiedNew();
                 } elseif ($field->type != 'json' && in_array($field->name, array_keys($changedData)) && in_array($field->name, array_keys($data['data']))) {
 
-                    if ($changedData[$field->name] == $data['data'][$field->name]) {
+                    if ($changedData[$field->name] == $originalData[$field->name]) {
                         unset($changedData[$field->name]);
                     }
                 }
@@ -150,8 +170,28 @@ trait AuditTrait
         return $data;
     }
 
+    protected function auditBeforeDelete(array $data)
+    {
+        if (empty($data['id'])) {
+            return false;
+        }
+
+        foreach ($data['id'] as $id) {
+
+            $deleted = $this->find($id);
+
+            foreach ($deleted as $key => $value) {
+                if (json_validate($value)) {
+                    $deleted->{$key} = json_decode($value);
+                }
+            }
+
+            $this->deletedData = (array) $deleted;
+        }
+    }
+
     // record successful delete events
-    protected function auditDelete(array $data)
+    protected function auditAfterDelete(array $data)
     {
         if (! $data['result']) {
             return false;
@@ -160,18 +200,15 @@ trait AuditTrait
             return false;
         }
 
-        $audit = [
-            'source'  => $this->table,
-            'event'   => 'delete',
-            'summary' => ($data['purge']) ? 'purge' : 'soft',
-        ];
-
-        // add an entry for each ID
-        $audit = service('audit');
-
         foreach ($data['id'] as $id) {
-            $audit['source_id'] = $id;
-            $audit->add($audit);
+
+            $audit = [
+                'source'  => $this->table,
+                'source_id' => $id,
+                'event'   => 'delete',
+                'summary' => json_encode(($data['purge'] || !$this->useSoftDeletes) ? ['type' => 'purge', 'last_data' => $this->deletedData] : ['type' => 'soft', 'last_data' => $this->deletedData])
+            ];
+            service('audit')->add($audit);
         }
 
         return $data;
