@@ -76,7 +76,7 @@ trait AuditTrait
                 unset($insertData[$key]);
                 continue;
             }
-            if (json_validate($value)) {
+            if (is_string($value) && json_validate($value)) {
 
                 $insertData[$key] = array_filter(json_decode($value, true));
 
