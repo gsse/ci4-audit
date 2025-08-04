@@ -123,6 +123,11 @@ trait AuditTrait
                         continue;
                     }
 
+                    if (empty(array_filter((array) $jsonDiff->getModifiedNew()))) {
+                        unset($changedData[$field->name]);
+                        continue;
+                    }
+
                     $changedData[$field->name] = (array) $jsonDiff->getModifiedNew();
                 } elseif ($field->type != 'json' && in_array($field->name, array_keys($changedData)) && in_array($field->name, array_keys($data['data']))) {
 
