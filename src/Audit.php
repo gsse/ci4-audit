@@ -39,22 +39,22 @@ class Audit
      *
      * @deprecated This will be removed in the next major release; use codeigniter4/authentication-implementation
      */
-    public function sessionUserId(): string
+    public function sessionUserId(): ?string
     {
         if (is_cli()) {
-            return 0;
+            return null;
         }
 
-        return session($this->config->sessionUserId) ?? 0;
+        return session($this->config->sessionUserId) ?? null;
     }
 
-    public function sessionCompanyId(): string
+    public function sessionCompanyId(): ?string
     {
         if (is_cli()) {
-            return 0;
+            return null;
         }
 
-        return session($this->config->sessionCompanyId) ?? 0;
+        return session($this->config->sessionCompanyId) ?? null;
     }
 
     /**
