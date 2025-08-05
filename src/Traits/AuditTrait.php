@@ -4,7 +4,6 @@ namespace Decoda\Audit\Traits;
 
 use Swaggest\JsonDiff\JsonDiff;
 use Decoda\Audit\Models\AuditModel;
-use stdClass;
 
 // CLASS
 trait AuditTrait
@@ -68,20 +67,29 @@ trait AuditTrait
             return false;
         }
 
-        $insertData = array_intersect_key($data['data'], array_flip($this->auditableFields));
+        if (empty($this->nonAuditableFields)) {
+            $insertedData = $data['data'];
+        } else {
+            $insertedData = array_diff_key($data['data'], array_flip($this->nonAuditableFields));
+        }
 
-        foreach ($insertData as $key => $value) {
+        unset($insertedData['id'], $insertedData['company_id'], $insertedData['created_at'], $insertedData['updated_at']);
+
+        foreach ($insertedData as $key => $value) {
 
             if (empty($value)) {
-                unset($insertData[$key]);
+                unset($insertedData[$key]);
                 continue;
             }
-            if (is_string($value) && json_validate($value)) {
 
-                $insertData[$key] = array_filter(json_decode($value, true));
+            $value = json_decode($value, true);
 
-                if (empty($insertData[$key])) {
-                    unset($insertData[$key]);
+            if (is_array($value)) {
+
+                $insertedData[$key] = array_filter($value);
+
+                if (empty($insertedData[$key])) {
+                    unset($insertedData[$key]);
                 }
             }
         }
@@ -90,7 +98,7 @@ trait AuditTrait
             'source'    => $this->table,
             'source_id' => $data['id'],
             'event'     => 'insert',
-            'summary'   => json_encode($insertData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+            'summary'   => json_encode($insertedData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
         ];
         service('audit')->add($audit);
 
@@ -101,7 +109,6 @@ trait AuditTrait
     protected function auditBeforeUpdate(array $data)
     {
         $fields = $this->getFieldData($this->table);
-        $foreingKeys = $this->getForeignKeyData($this->table);
 
         foreach ($data['id'] as $sourceId) {
 
@@ -137,16 +144,7 @@ trait AuditTrait
                 }
             }
 
-            // Find and unset, if necessary, foreing keys
-            foreach ($foreingKeys as $foreingKey) {
-                foreach ($foreingKey->column_name as $columnName) {
-                    if (!in_array($columnName, array_keys($data['data']))) {
-                        unset($changedData[$columnName]);
-                    }
-                }
-            }
-
-            unset($changedData['updated_at']);
+            unset($changedData['id'], $changedData['company_id'], $changedData['created_at'], $changedData['updated_at']);
 
             $this->changedData = $changedData;
         }
@@ -158,15 +156,17 @@ trait AuditTrait
     {
         foreach ($data['id'] as $sourceId) {
 
-            $changedData = array_intersect_key($this->changedData, array_flip($this->auditableFields));
+            if (!empty($this->nonAuditableFields)) {
+                $this->changedData = array_diff_key($this->changedData, array_flip($this->nonAuditableFields));
+            }
 
-            if (!empty($changedData) || empty($this->auditableFields)) {
+            if (!empty($this->changedData)) {
 
                 $audit = [
                     'source'    => $this->table,
                     'source_id' => $sourceId,
                     'event'     => 'update',
-                    'summary'   => json_encode($changedData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+                    'summary'   => json_encode($this->changedData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
                 ];
                 service('audit')->add($audit);
             }
@@ -186,8 +186,11 @@ trait AuditTrait
             $deleted = $this->find($id);
 
             foreach ($deleted as $key => $value) {
-                if (json_validate($value)) {
-                    $deleted->{$key} = json_decode($value);
+
+                $value = json_decode($value, true);
+
+                if (is_array($value)) {
+                    $deleted->{$key} = $value;
                 }
             }
 
