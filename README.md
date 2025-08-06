@@ -1,5 +1,10 @@
+> [!CAUTION]
+> This project is usable but still under development, feel free to clone and change as you wish.
+
 # Decoda\Audit
 Lightweight object logging for CodeIgniter 4
+
+# Attention: this project is still under development, feel free to clone and change as you wish.
 
 ## Quick Start
 
