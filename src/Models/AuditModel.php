@@ -7,6 +7,13 @@ use Decoda\Audit\Entities\Audit;
 
 class AuditModel extends Model
 {
+    public function __construct()
+    {
+        $config = new \Decoda\Audit\Config\Audit;
+        $this->DBGroup = $config->dbGroup;
+        parent::__construct();
+    }
+
     protected $table          = 'audits';
     protected $primaryKey     = 'id';
     protected $returnType     = Audit::class;
