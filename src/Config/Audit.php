@@ -13,4 +13,6 @@ class Audit extends BaseConfig
 
     // Whether to continue instead of throwing exceptions
     public $silent = true;
+
+    public $dbGroup = 'default';
 }

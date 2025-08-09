@@ -5,7 +5,14 @@ namespace Decoda\Audit\Database\Migrations;
 use CodeIgniter\Database\Migration;
 
 class Migration_create_table_audits extends Migration
-{
+{    
+    public function __construct()
+    {
+        $config = new \Decoda\Audit\Config\Audit;
+        $this->DBGroup = $config->dbGroup;
+        parent::__construct();
+    }
+
     public function up()
     {
         // audit logs

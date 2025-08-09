@@ -49,6 +49,10 @@ The library's default behavior can be altered by extending its config file. Copy
 **examples/Audit.php** to **app/Config/Audit.php** and follow the instructions in the
 comments. If no config file is found in **app/Config** the library will use its own.
 
+## Database
+
+Some applications may use audit logs in separate databases. If this is your scenario, you can set the database group in the `$dbGroup` property of the **Audit.php** configuration file, or set it in your .env file by adding the environment variable `audit.dbGroup = 'your database group'`
+
 ## Usage
 
 Once the library is included all the resources are ready to go and you just need to
